@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DTA Etsy Product Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #18442B;
+    --dta-green: #49654C;
+    --orange: #FAC090;
+    --ivory: #E8E0C5;
+    --sage: #A4BDBA;
+    --white: #FFFFFF;
+    --green-matter: #B5BEBB;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Libre Franklin', system-ui, sans-serif;
+    background: var(--white);
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--green);
+    padding: 28px 24px 20px;
+    position: relative;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--orange);
+  }
+  .header-inner { max-width: 720px; margin: 0 auto; }
+  .header-brand {
+    font-size: 11px; font-weight: 700; color: var(--orange);
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .header-title {
+    font-size: 28px; font-weight: 900; color: var(--white); line-height: 1.2;
+  }
+  .header-sub {
+    margin-top: 8px; font-size: 14px; color: var(--sage); line-height: 1.5;
+  }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    background: var(--white);
+    border-bottom: 2px solid var(--ivory);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .tab-bar-inner {
+    max-width: 720px; margin: 0 auto; display: flex;
+  }
+  .tab-btn {
+    flex: 1; padding: 14px 8px; border: none; cursor: pointer;
+    font-family: 'Libre Franklin', sans-serif; font-size: 13px; font-weight: 700;
+    background: transparent; color: var(--dta-green);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--green); }
+  .tab-btn.active {
+    color: var(--green);
+    border-bottom-color: var(--orange);
+    background: var(--white);
+  }
+
+  /* ── Content ── */
+  .content {
+    max-width: 720px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; flex: 1;
+  }
+
+  /* ── Progress ── */
+  .progress { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
+  .progress-dot {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+    background: var(--ivory); color: var(--green-matter); transition: all 0.3s;
+  }
+  .progress-dot.active { background: var(--green); color: var(--orange); }
+  .progress-dot.done { background: var(--sage); color: var(--white); }
+  .progress-line { width: 40px; height: 2px; background: var(--ivory); border-radius: 1px; }
+
+  /* ── Intro box ── */
+  .intro-box {
+    background: rgba(232,224,197,0.5); border-radius: 8px; padding: 16px;
+    margin-bottom: 24px; border: 1px solid rgba(164,189,186,0.27);
+    font-size: 14px; color: var(--dta-green); line-height: 1.6;
+  }
+  .intro-box strong { color: var(--green); }
+
+  /* ── Form fields ── */
+  .field { margin-bottom: 20px; }
+  .field-label {
+    display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600;
+    color: var(--green);
+  }
+  .field-hint {
+    margin: 0 0 8px; font-size: 12px; color: var(--dta-green); line-height: 1.5;
+  }
+  .field textarea, .field input[type="text"] {
+    width: 100%; padding: 12px 14px; font-size: 14px; border-radius: 6px;
+    border: 1.5px solid var(--sage); background: var(--white);
+    font-family: 'Libre Franklin', sans-serif; line-height: 1.6;
+    outline: none; transition: border-color 0.2s; box-sizing: border-box;
+  }
+  .field textarea { resize: vertical; }
+  .field textarea:focus, .field input[type="text"]:focus {
+    border-color: var(--orange);
+  }
+  .field .price-wrap { position: relative; }
+  .field .price-prefix {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; color: var(--dta-green);
+  }
+  .field .price-wrap input { padding-left: 28px; }
+
+  /* ── Buttons ── */
+  .gen-btn {
+    padding: 12px 32px; font-size: 15px; font-weight: 700; border-radius: 6px;
+    border: none; cursor: pointer; font-family: 'Libre Franklin', sans-serif;
+    background: var(--green); color: var(--orange); transition: all 0.2s;
+  }
+  .gen-btn:hover { opacity: 0.9; }
+  .gen-btn:disabled {
+    background: var(--green-matter); color: var(--white); cursor: default;
+  }
+
+  /* ── Prompt output ── */
+  .prompt-output {
+    margin-top: 24px; background: var(--green); border-radius: 8px;
+    overflow: hidden; display: none;
+  }
+  .prompt-output.visible { display: block; }
+  .prompt-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--dta-green);
+  }
+  .prompt-label {
+    font-size: 13px; font-weight: 700; color: var(--orange);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .copy-btn {
+    padding: 6px 16px; font-size: 13px; font-weight: 600; border-radius: 4px;
+    border: none; cursor: pointer; font-family: 'Libre Franklin', sans-serif;
+    background: var(--orange); color: var(--green); transition: all 0.2s;
+  }
+  .copy-btn.copied { background: var(--sage); color: var(--white); }
+  .prompt-body {
+    padding: 16px; font-size: 12px; color: var(--ivory);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-word; max-height: 400px;
+    overflow-y: auto;
+  }
+
+  /* ── Tip box ── */
+  .tip-box {
+    margin-top: 20px; background: rgba(250,192,144,0.13); border-radius: 8px;
+    padding: 16px; border: 1px solid rgba(250,192,144,0.4);
+    font-size: 13px; color: var(--green); line-height: 1.6; display: none;
+  }
+  .tip-box.visible { display: block; }
+  .tip-box strong { display: block; margin-bottom: 4px; }
+
+  /* ── Tab panel ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Footer ── */
+  .footer {
+    background: var(--green); padding: 16px 24px; text-align: center;
+    font-size: 11px; color: var(--green-matter);
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-brand">Digital Tech Alchemy</div>
+    <h1 class="header-title">Etsy Product Prompt Builder</h1>
+    <p class="header-sub">Research → Brief → Build. Three prompts that take you from niche idea to production-ready product.</p>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab-btn active" data-tab="pmt">🔍 1. Pain-Mining Triangle</button>
+    <button class="tab-btn" data-tab="brief">📋 2. Product Brief</button>
+    <button class="tab-btn" data-tab="build">🛠 3. Build Guide</button>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- Progress -->
+  <div class="progress">
+    <div class="progress-dot active" id="dot-1">1</div>
+    <div class="progress-line"></div>
+    <div class="progress-dot" id="dot-2">2</div>
+    <div class="progress-line"></div>
+    <div class="progress-dot" id="dot-3">3</div>
+  </div>
+
+  <!-- ═══ TAB 1: PMT ═══ -->
+  <div class="tab-panel active" id="panel-pmt">
+    <div class="intro-box">
+      <strong>Step 1 of 3.</strong> The Pain-Mining Triangle validates your product idea before you invest time building it. Fill in your niche and price range below, then copy the generated prompt into any AI chat.
+    </div>
+
+    <div class="field">
+      <label class="field-label">Your Niche Description</label>
+      <p class="field-hint">Be specific: who is the buyer, what does the product help them do, and what format is it? The more detail you provide, the sharper the AI research.</p>
+      <textarea id="pmt-niche" rows="5" placeholder="e.g. A 90-day consulting launch planner for professionals aged 45-65 who are leaving corporate careers to start independent consulting practices. They need a structured system to find clients, set rates, and build a pipeline — not generic startup advice."></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Target Price Range</label>
+      <p class="field-hint">Your expected Etsy listing price. Helps the AI benchmark against competitors.</p>
+      <div class="price-wrap">
+        <span class="price-prefix">$</span>
+        <input type="text" id="pmt-price" placeholder="e.g. 27.00 – 47.00">
+      </div>
+    </div>
+
+    <button class="gen-btn" id="pmt-gen" disabled>Generate PMT Prompt</button>
+
+    <div class="prompt-output" id="pmt-output">
+      <div class="prompt-header">
+        <span class="prompt-label">Your Pain-Mining Triangle Prompt</span>
+        <button class="copy-btn" id="pmt-copy">Copy Prompt</button>
+      </div>
+      <pre class="prompt-body" id="pmt-prompt-text"></pre>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: BRIEF ═══ -->
+  <div class="tab-panel" id="panel-brief">
+    <div class="intro-box">
+      <strong>Step 2 of 3.</strong> Now turn your PMT research into a structured product brief. If you ran the PMT in the same AI chat, you can leave the PMT Brief field empty and tell the AI to reference it. Otherwise, paste your full PMT output below.
+    </div>
+
+    <div class="field">
+      <label class="field-label">PMT Brief Output (optional if same chat session)</label>
+      <p class="field-hint">If you ran the PMT in the same conversation, leave this blank — the prompt will tell the AI to use it automatically.</p>
+      <textarea id="brief-pmt" rows="5" placeholder="Paste your Buyer Language Bank, Gap Map, and Validated Core Promise here — or leave blank if running in the same AI chat session."></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Product Concept</label>
+      <p class="field-hint">What you're building and who it's for. One or two sentences.</p>
+      <textarea id="brief-concept" rows="3" placeholder="e.g. A 90-day consulting launch planner for professionals leaving corporate to start an independent practice"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Target Price</label>
+      <div class="price-wrap">
+        <span class="price-prefix">$</span>
+        <input type="text" id="brief-price" placeholder="e.g. 37.00">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Product Format</label>
+      <p class="field-hint">What the buyer actually downloads — file types, page counts, and components.</p>
+      <textarea id="brief-format" rows="3" placeholder="e.g. 30-page PDF workbook with fillable fields + companion Excel tracker with built-in formulas + one-page quick-reference infographic PDF"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Visual Style Preferences (optional)</label>
+      <p class="field-hint">Describe the look and feel. Include hex codes if you have brand colours. Leave blank for AI to recommend.</p>
+      <textarea id="brief-style" rows="2" placeholder="e.g. Clean and professional, dark green and warm ivory tones, modern sans-serif fonts."></textarea>
+    </div>
+
+    <button class="gen-btn" id="brief-gen" disabled>Generate Product Brief Prompt</button>
+
+    <div class="prompt-output" id="brief-output">
+      <div class="prompt-header">
+        <span class="prompt-label">Your Product Brief Prompt</span>
+        <button class="copy-btn" id="brief-copy">Copy Prompt</button>
+      </div>
+      <pre class="prompt-body" id="brief-prompt-text"></pre>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: BUILD ═══ -->
+  <div class="tab-panel" id="panel-build">
+    <div class="intro-box">
+      <strong>Step 3 of 3.</strong> Turn your product brief into a concrete build plan. Paste your completed brief below and the prompt will generate a file checklist, build order, AI content prompts for each section, design specs, quality checklist, and thumbnail directions.
+    </div>
+
+    <div class="field">
+      <label class="field-label">Your Completed Product Brief</label>
+      <p class="field-hint">This is the full output from Step 2. The build guide uses every section to create actionable production instructions.</p>
+      <textarea id="build-brief" rows="8" placeholder="Paste the full product brief the AI generated in Step 2. Include all 10 sections — the more complete the brief, the more specific the build guide."></textarea>
+    </div>
+
+    <button class="gen-btn" id="build-gen" disabled>Generate Build Guide Prompt</button>
+
+    <div class="prompt-output" id="build-output">
+      <div class="prompt-header">
+        <span class="prompt-label">Your Build Guide Prompt</span>
+        <button class="copy-btn" id="build-copy">Copy Prompt</button>
+      </div>
+      <pre class="prompt-body" id="build-prompt-text"></pre>
+    </div>
+
+    <div class="tip-box" id="build-tip">
+      <strong>What to do with the Build Guide:</strong>
+      The AI will produce a file checklist, build order, ready-to-use content generation prompts for each section, design specifications, a quality checklist, and thumbnail concepts. Work through the file checklist in order — use the content prompts to generate each section, then apply the design spec to assemble the final product.
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  Digital Tech Alchemy — RTPIC Passive Income Club — Works in Claude · ChatGPT · Gemini
+</div>
+
+<script>
+// ── Tab switching ──
+const tabBtns = document.querySelectorAll('.tab-btn');
+const panels = document.querySelectorAll('.tab-panel');
+const dots = [document.getElementById('dot-1'), document.getElementById('dot-2'), document.getElementById('dot-3')];
+const tabOrder = ['pmt', 'brief', 'build'];
+
+function switchTab(tabId) {
+  tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  panels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + tabId));
+  const idx = tabOrder.indexOf(tabId);
+  dots.forEach((d, i) => {
+    d.classList.remove('active', 'done');
+    if (i === idx) d.classList.add('active');
+    else if (i < idx) d.classList.add('done');
+  });
+}
+
+tabBtns.forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+// ── Copy helper ──
+function setupCopy(btnId, textId) {
+  const btn = document.getElementById(btnId);
+  btn.addEventListener('click', () => {
+    const text = document.getElementById(textId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Prompt'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+}
+
+setupCopy('pmt-copy', 'pmt-prompt-text');
+setupCopy('brief-copy', 'brief-prompt-text');
+setupCopy('build-copy', 'build-prompt-text');
+
+// ── Enable/disable buttons ──
+function watchFields(fieldIds, btnId) {
+  const btn = document.getElementById(btnId);
+  fieldIds.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const allFilled = fieldIds.every(fid => document.getElementById(fid).value.trim());
+      btn.disabled = !allFilled;
+    });
+  });
+}
+
+watchFields(['pmt-niche'], 'pmt-gen');
+watchFields(['brief-concept', 'brief-format'], 'brief-gen');
+watchFields(['build-brief'], 'build-gen');
+
+// ══════════════════════════════════════════
+// PROMPT GENERATORS
+// ══════════════════════════════════════════
+
+function generatePMT() {
+  const niche = document.getElementById('pmt-niche').value.trim();
+  const price = document.getElementById('pmt-price').value.trim() || 'TBD';
+
+  const prompt = `You are a senior Etsy digital product strategist. I'm researching a product concept for an audience I'll describe below. Your job is to validate whether real buyer pain exists, find the gaps competitors are missing, and hand me a positioning hook I can build a listing around.
+
+MY NICHE:
+${niche}
+
+PRICE RANGE I'M TARGETING: $${price}
+
+---
+
+Run the following three research corners in order. Produce all outputs before moving on to the final summary.
+
+CORNER 1 — LANGUAGE MINING (buyer pain signals)
+
+Search Reddit, forums, Quora, and online communities where my target buyer talks about this problem. Collect 15–20 verbatim phrases that represent raw emotional or operational pain — not general topic mentions, but the exact words real people use when they are frustrated, stuck, overwhelmed, or struggling with the problem my product would solve.
+
+For each phrase, note the source (e.g. Reddit, Quora, forum).
+
+Output format:
+## Buyer Language Bank
+1. "[verbatim phrase]" — Source
+2. "[verbatim phrase]" — Source
+... (15–20 total)
+
+After the list, write 2–3 sentences summarising the dominant emotional theme across these phrases.
+
+---
+
+CORNER 2 — COMPETITOR REVIEW MINING (gap analysis)
+
+Search Etsy for the top 5 sellers in this product category or the closest adjacent category. For each listing, examine the 3-star and 4-star reviews (not the 5-star praise — the almost-satisfied buyers). Identify:
+- What buyers wished the product included but didn't
+- What confused or frustrated them
+- What format, feature, or customisation limitation annoyed them
+- What expectation the product set but didn't fully deliver on
+
+Output format:
+## Gap Map
+
+| # | Competitor Listing | What's Missing or Weak | Buyer Frustration | Our Opportunity |
+|---|---|---|---|---|
+| 1 | [listing title or description] | ... | ... | ... |
+| 2 | ... | ... | ... | ... |
+... (up to 5 competitors)
+
+After the table, write 2–3 sentences summarising the biggest gap pattern you see across all five competitors.
+
+---
+
+CORNER 3 — SYNTHESIS (hidden need + positioning hook)
+
+Using the Buyer Language Bank and the Gap Map together, answer these three questions:
+
+1. What is the single underlying emotional or operational need that no current product on Etsy fully solves for this buyer?
+
+   State it as: "The hidden need is: [one sentence]."
+
+2. What is the core promise that would make my product fundamentally different from what's already listed?
+
+   State it as: "Validated Core Promise: [one sentence]."
+
+3. Based on everything above, write a refined one-sentence niche statement I can use to guide my product build. It should include who the buyer is, what the product gives them, and why it's different.
+
+   State it as: "Recommended niche statement: [one sentence]."
+
+---
+
+FINAL OUTPUT — PMT BRIEF
+
+Combine all three corners into a single structured brief with clear section headers:
+
+1. Buyer Language Bank (Corner 1)
+2. Gap Map table (Corner 2)
+3. Hidden Need + Validated Core Promise + Recommended Niche Statement (Corner 3)
+
+End with:
+"PMT complete. Ready to build."`;
+
+  document.getElementById('pmt-prompt-text').textContent = prompt;
+  document.getElementById('pmt-output').classList.add('visible');
+}
+
+function generateBrief() {
+  const pmtBrief = document.getElementById('brief-pmt').value.trim();
+  const concept = document.getElementById('brief-concept').value.trim();
+  const price = document.getElementById('brief-price').value.trim() || 'TBD';
+  const format = document.getElementById('brief-format').value.trim();
+  const style = document.getElementById('brief-style').value.trim();
+
+  const pmtSection = pmtBrief || 'Use the PMT Brief from this conversation';
+  const styleSection = style || 'Use your best judgment based on the niche';
+
+  const prompt = `You are a senior Etsy digital product strategist. I have completed my Pain-Mining Triangle research and I'm ready to turn it into a full product brief — the single document that drives every creative, copy, and listing decision for this product.
+
+## MY PMT RESULTS
+
+${pmtSection}
+
+## MY PRODUCT DETAILS
+
+Product concept: ${concept}
+
+Target price: $${price}
+
+Product format: ${format}
+
+Visual style preferences: ${styleSection}
+
+---
+
+Using my PMT research and the product details above, produce a complete product brief with ALL of the following sections. Do not skip any section. Do not combine sections. Use clear markdown headers for each one.
+
+## SECTION 1 — PRODUCT NAME OPTIONS
+
+Provide exactly 3 product name options. Each must:
+- Be under 140 characters (Etsy title limit)
+- Lead with the primary SEO keyword in the first 3 words
+- Sound natural and benefit-forward (not keyword-stuffed)
+- Speak to the buyer's pain point or desired outcome using language from the Buyer Language Bank where possible
+
+Format:
+1. [Name option] — [one-sentence rationale for why this works]
+2. [Name option] — [rationale]
+3. [Name option] — [rationale]
+
+## SECTION 2 — TARGET BUYER PROFILE
+
+Define the specific buyer in three parts:
+- Persona: Who they are (age range, life stage, professional background, current situation)
+- Pain point: The core frustration or unmet need driving them to search for this product — use language from the Buyer Language Bank
+- Buying trigger: What specific moment or event pushes them from "thinking about it" to "buying now"
+
+## SECTION 3 — CORE PROBLEM SOLVED
+
+Write exactly one sentence that captures the product's primary promise. This is the answer to: "What does this product do for the buyer that nothing else on Etsy currently does?"
+
+Ground this in the Validated Core Promise from the PMT.
+
+## SECTION 4 — PRODUCT FORMAT AND DELIVERY
+
+Specify:
+- File types included (PDF, XLSX, DOCX, Canva template link, Notion template, etc.)
+- Page count or scope for each file
+- Delivery method (Etsy instant digital download)
+- What the buyer receives in their download (list every file by name)
+
+## SECTION 5 — FULL CONTENT OUTLINE
+
+Provide a section-by-section breakdown of every page or component in the product. For each section, include:
+- Section name / title
+- What it covers (2-3 sentences)
+- Why it matters to the buyer
+
+This outline must be detailed enough that someone could build the product from this document alone without asking follow-up questions.
+
+If the product has multiple files (e.g. a PDF + an Excel tracker), outline each file separately under its own sub-header.
+
+## SECTION 6 — VISUAL STYLE DIRECTION
+
+Define the visual identity for this product:
+- Primary colour and hex code
+- Secondary colour and hex code
+- Accent colour and hex code
+- Background colour and hex code
+- Font pairing recommendation (heading font + body font)
+- Layout tone (e.g. "editorial and structured" or "warm and approachable" or "data-dense and professional")
+- Any specific visual elements (icons, callout boxes, charts, dividers)
+
+## SECTION 7 — DIFFERENTIATION STATEMENT
+
+Write 2-3 sentences explaining exactly why this product beats existing Etsy listings in the same category. Reference specific gaps from the Gap Map. This is not generic — it must name what competitors are missing and how this product fills that gap.
+
+## SECTION 8 — RECOMMENDED PRICE WITH RATIONALE
+
+State the recommended listing price in USD. Then provide:
+- Where this sits relative to competitor pricing (floor, midpoint, ceiling of the market)
+- Why this price is justified
+- Whether you recommend a launch discount, and if so, what percentage and for how long
+
+## SECTION 9 — PRELIMINARY SEO KEYWORD SET
+
+Provide two keyword groups:
+
+Primary keywords (5-7):
+- These are the highest-intent Etsy search phrases for this product
+- The #1 keyword should appear in positions 1-3 of the listing title
+
+Secondary keywords (5-7):
+- Long-tail and niche-specific phrases
+- Buyer-intent variations
+
+## SECTION 10 — COMPETITIVE EDGE SUMMARY
+
+Write a 3-5 sentence summary that could be read aloud in 30 seconds and would convince someone this product is worth building. It should answer: What is it, who is it for, what problem does it solve better than anything else available, and why will it sell?
+
+---
+
+FORMAT RULES:
+- Use clear ## headers for each section exactly as numbered above
+- Do not merge sections or skip any section
+- Write in a professional, peer-to-peer tone
+- Use the buyer's own language (from the Buyer Language Bank) in sections 1, 2, 3, and 7
+- The entire brief should be detailed enough to hand to a designer or copywriter who has never seen the PMT and have them build the product without further input`;
+
+  document.getElementById('brief-prompt-text').textContent = prompt;
+  document.getElementById('brief-output').classList.add('visible');
+}
+
+function generateBuild() {
+  const briefContent = document.getElementById('build-brief').value.trim();
+
+  const prompt = `You are a senior digital product creation specialist. I have a completed product brief for an Etsy digital product and I need you to turn it into a step-by-step build plan I can follow — either building manually or using AI tools to help me create the files.
+
+## MY PRODUCT BRIEF
+
+${briefContent}
+
+---
+
+Using the product brief above, produce a complete BUILD GUIDE with the following sections. This guide should be specific enough that I can sit down and build the product in one focused session without making decisions on the fly.
+
+## SECTION 1 — FILE PRODUCTION CHECKLIST
+
+List every file I need to create, in build order. For each file:
+- Exact file name (using the product name from the brief)
+- File type (PDF, XLSX, DOCX, Canva template, etc.)
+- Page count or scope
+- Which tool to use (Canva, Google Docs, Excel, AI generation, etc.)
+- Estimated time to build
+
+End with a total file count and estimated total build time.
+
+## SECTION 2 — BUILD ORDER AND DEPENDENCIES
+
+Some files depend on others being finished first (e.g. you need the main product done before you can write accurate delivery instructions). Map the build order:
+- What to build first and why
+- What can be built in parallel
+- What must wait until other files are complete
+- Where to pause for quality checks before continuing
+
+## SECTION 3 — CONTENT PRODUCTION PROMPTS
+
+For each major content section in the product, write a ready-to-use AI prompt I can paste into Claude, ChatGPT, or Gemini to generate that section's content. Each prompt should:
+- Reference the specific section from the content outline
+- Include the target buyer profile and tone of voice
+- Specify the exact output format needed (paragraph, bullet list, table, etc.)
+- Include word count or length guidance
+
+Number each prompt to match the content outline from the brief.
+
+## SECTION 4 — DESIGN SPECIFICATION
+
+Translate the visual style direction from the brief into concrete build instructions:
+- Exact colours with hex codes and where each is used (headers, backgrounds, accents, text)
+- Font names and sizes for: main title, section headers, body text, callout text, captions
+- Spacing rules (margins, padding between sections, line height)
+- Layout template description for each page type (cover page, content page, worksheet page, reference page)
+- Icon or graphic style guidance
+
+This should be detailed enough to hand to someone who has never seen the brief and have them match the intended design.
+
+## SECTION 5 — QUALITY CHECKLIST
+
+A pre-launch quality checklist covering:
+- Content completeness (every section from the outline is present and populated)
+- Design consistency (colours, fonts, and spacing are uniform across all files)
+- Functionality (all formulas work, all links resolve, all fillable fields function)
+- Buyer experience (instructions are clear, file names are professional, download is clean)
+- Etsy readiness (files are under size limits, formats are compatible, delivery PDF is complete)
+
+## SECTION 6 — THUMBNAIL DIRECTION
+
+Based on the product brief, write thumbnail concepts for the first 5 Etsy listing images:
+1. Hero thumbnail — what headline text, what visual, what the buyer sees first
+2. Problem thumbnail — the pain point this product solves, in buyer language
+3. What's inside — show the file types, page count, concrete deliverables
+4. Key feature — the single most differentiating element
+5. Social proof / CTA — review-style framing or clear call to action
+
+For each thumbnail, specify: background colour, text overlay (exact words), and layout direction.
+
+---
+
+FORMAT RULES:
+- Use clear ## headers for each section
+- Number all lists and prompts for easy reference
+- Write in a direct, practical tone — this is a work document, not a sales piece
+- Every instruction should be specific enough to act on immediately
+- If a step requires a decision from me, flag it clearly as [DECISION NEEDED] with the options`;
+
+  document.getElementById('build-prompt-text').textContent = prompt;
+  document.getElementById('build-output').classList.add('visible');
+  document.getElementById('build-tip').classList.add('visible');
+}
+
+// ── Wire up generate buttons ──
+document.getElementById('pmt-gen').addEventListener('click', generatePMT);
+document.getElementById('brief-gen').addEventListener('click', generateBrief);
+document.getElementById('build-gen').addEventListener('click', generateBuild);
+</script>
+</body>
+</html>
